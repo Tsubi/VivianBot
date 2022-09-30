@@ -2,7 +2,7 @@ import discord
 import os
 import random
 
-client = discord.Client()
+client = discord.Client(intents=discord.Intents.default())
 
 #Vivian Simple Information----------------------------------------------------
 #Listen words
