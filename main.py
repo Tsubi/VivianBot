@@ -2,8 +2,6 @@ import discord
 import os
 import random
 
-from keep_alive import keep_alive
-
 client = discord.Client()
 
 #Vivian Simple Information----------------------------------------------------
@@ -163,7 +161,5 @@ async def on_raw_reaction_remove(payload):
       member = await guild.fetch_member(payload.user_id)
       if member is not None:
         await member.remove_roles(role)
-
-keep_alive()
 
 client.run(os.getenv('TOKEN'))
