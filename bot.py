@@ -99,8 +99,11 @@ async def on_raw_reaction_add(payload):
     guild = discord.utils.find(lambda g : g.id == guild_id, client.guilds)
 
     if payload.emoji.id == 845447895758274631:
-      #Stream notification
+      #Isabelle Stream notification
       role = discord.utils.get(guild.roles, id=932759248755126303)
+    elif payload.emoji.id == 794017620965720094:
+      #Mark Stream notification
+      role = discord.utils.get(guild.roles, id=1024670256381304842)
     
     if role is not None:
       member = payload.member
@@ -165,8 +168,11 @@ async def on_raw_reaction_remove(payload):
     guild = discord.utils.find(lambda g : g.id == guild_id, client.guilds)
 
     if payload.emoji.id == 845447895758274631:
-      #Stream notification
+      #Isabelle Stream notification
       role = discord.utils.get(guild.roles, id=932759248755126303)
+    elif payload.emoji.id == 794017620965720094:
+      #Mark Stream notification
+      role = discord.utils.get(guild.roles, id=1024670256381304842)
     
     if role is not None:
       member = await guild.fetch_member(payload.user_id)
