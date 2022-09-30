@@ -1,6 +1,9 @@
 import discord
 import os
 import random
+from dotenv import load_dotenv
+
+load_dotenv()
 
 client = discord.Client(intents=discord.Intents.default())
 
