@@ -1,11 +1,16 @@
 import discord
 import os
 import random
+import logging
 from dotenv import load_dotenv
+
+log = logging.getLogger("VivianBot")
+log.setLevel(logging.DEBUG)
+
 
 load_dotenv()
 
-client = discord.Client(intents=discord.Intents.default())
+client = discord.Client(intents=discord.Intents.all())
 
 #Vivian Simple Information----------------------------------------------------
 #Listen words
@@ -17,14 +22,17 @@ vivBirdNoises = ["Chirp!", "Cheep!", "Peep peep!", "Chirp chirp!", "Tweet tweet!
 #start
 @client.event
 async def on_ready():
-    print('We have logged in as {0.user}'.format(client))
+    log.info(f'Bot logged in as: {client.user}')
 
 #listens for a message
 @client.event
 async def on_message(message):
+    
     #makes sure that Vivian doesn't responde to her own messages
     if message.author == client.user:
         return
+
+    log.debug(f"Recieved a message from {message.author}")
 
     #the message content variable
     msg = message.content
@@ -33,10 +41,10 @@ async def on_message(message):
     if any(word in msg for word in vivAttention):
         await message.channel.send(random.choice(vivBirdNoises))
 
-  #Commands---------------------------------------------------------------------
+    #Commands---------------------------------------------------------------------
     #!pet
     if msg.startswith(vivCommands[0]):
-        await message.channel.send(random.choice(vivBirdNoises) + " <:VivianPet:790248658054283274>")
+        await message.channel.send(f"{random.choice(vivBirdNoises)} <:VivianPet:790248658054283274>")
 
 #reaction add event
 @client.event
