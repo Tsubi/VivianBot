@@ -7,6 +7,7 @@ from logging import StreamHandler
 from logging.handlers import TimedRotatingFileHandler
 from dotenv import load_dotenv
 
+# Logging Configuration----------------------------------------------------
 log = logging.getLogger('VivianBot')
 
 console_handler = StreamHandler()
@@ -17,27 +18,26 @@ file_handler.setLevel(logging.INFO)
 
 log.addHandler(console_handler)
 log.addHandler(file_handler)
+# ----------------------------------------------------
 
-#Loading .env file, contains sensitive client information
-load_dotenv()
 
-client = discord.Client(intents=discord.Intents.all())
-guild_id = 580495406534885385 # Vivian's Birdhouse
-guild = None # not populated until bot is started
-
-#Vivian Simple Information----------------------------------------------------
-#Listen words
+# Vivian Interactions----------------------------------------------------
+#Listen words - bot will respond when one is menioned
 vivAttention = ["vivian", "virb", "birb"]
-
+# Global commands - any user can use these
 vivGlobalCommands = ["!pet"]
-
-mod_id = 580496944686694407
-mod_role = None # not populated until bot is started
+# Mod commands - need minimum mod permissions to use
 vivModCommands = ["!raffle", "!endraffle"]
 
+# Full list of commands, for control flow
+vivAllCommands = vivGlobalCommands + vivModCommands
 
-# Pet Responses
+# Pet Responses, used to respond to vivAttention as well
 vivBirdNoises = ["Chirp!", "Cheep!", "Peep peep!", "Chirp chirp!", "Tweet tweet!"]
+# ----------------------------------------------------
+
+
+# Load data from environment----------------------------------------------------
 # Active raffles. Stored as a list of user ids.
 raffles = {}
 for file in glob.glob("*.raffle"):
@@ -47,23 +47,39 @@ for file in glob.glob("*.raffle"):
     raffle_entrants = f.read().split()
   raffles[raffle_name] = raffle_entrants
 
+#Loading .env file, contains sensitive client information, and other server-configuration
+load_dotenv()
+client_token = os.getenv('TOKEN')
+guild_id = os.getenv('GUILD_ID')
+mod_id = os.getenv('MOD_ID')
+
+# Global variables to hold objects relating to configuration
+# Not populated until bot has had a change to run 
+guild = None
+mod_role = None
+# ----------------------------------------------------
+
+
+# Connect to discord API
+client = discord.Client(intents=discord.Intents.all())
     
 
-#start
+# Post-login startup sequence
 @client.event
 async def on_ready():
-    global guild, mod_role
     log.info(f'Bot logged in as: {client.user}')
+
+    # Setup global variables now that we are logged in
+    global guild, mod_role
     guild = client.get_guild(guild_id)
     mod_role = guild.get_role(mod_id) 
 
-#listens for a message
+# message sent event
 @client.event
 async def on_message(message):
     if message.author == client.user:
         return
 
-    
     # get information about who sent the message
     author = message.author
 
@@ -77,53 +93,88 @@ async def on_message(message):
     # for easy use checking against commands
     command = content_lower.split()[0]
 
-    log.debug(
-      f"""Parsing a message: 
+    # Enable for very verbose logging
+    # log.debug(
+    #   f"""Parsing a message: 
+    #     Author: {author.name}
+    #     Channel: {channel.name}
+    #     Content: {content}"""
+    # )
+
+    # Format string used to log commands
+    log_command = lambda command: log.info(
+      f"""Command Recieved: 
         Author: {author.name}
         Channel: {channel.name}
-        Content: {content}"""
+        Command: "{command}" """
     )
 
-    # Global User Commands---------------------------------------------------------------------
-    if command in vivGlobalCommands:
-      #!pet
-      if content_lower.startswith(vivGlobalCommands[0]):
-          await message.channel.send(f"{random.choice(vivBirdNoises)} <:VivianPet:790248658054283274>")
+    # Format string used to log commands
+    log_automated_response = lambda keyword: log.info(
+      f"""Keyword Recieved: 
+        Author: {author.name}
+        Channel: {channel.name}
+        Keyword(s): {keyword} """
+    )
 
-    # Mod Commands---------------------------------------------------------------------
-    elif command in vivModCommands and author.top_role > mod_role:
-      #!raffle <title> <emote>
-      if content_lower.startswith(vivModCommands[0]):
-        pass
-      #!endraffle <title>
-      if content_lower.startswith(vivModCommands[0]):
-        pass
+    # Vivian Commands----------------------------------------------------
+    if command in vivAllCommands:
+      log_command(command)
 
-    #User mentions bot by name
-    elif any(word in content_lower for word in vivAttention):
-      log.info(f"{author.name} mentioned bot, responding")
-      await message.channel.send(random.choice(vivBirdNoises))
+      # Global User Commands----------------------------------------------------
+      if command in vivGlobalCommands:
+
+        #!pet
+        if content_lower.startswith(vivGlobalCommands[0]):
+          response = f"{random.choice(vivBirdNoises)} <:VivianPet:790248658054283274>"
+          await message.channel.send(response)
+      # ----------------------------------------------------
+
+      # Mod Commands----------------------------------------------------
+      elif command in vivModCommands and author.top_role > mod_role:
+
+        #!raffle <title> <emote>
+        if content_lower.startswith(vivModCommands[0]):
+          log.info("<params>")
+
+        #!endraffle <title>
+        if content_lower.startswith(vivModCommands[0]):
+          log.info("<params>")
+      # ----------------------------------------------------
+
+    # ----------------------------------------------------
+    
+    # Non-Command Automated Responses----------------------------------------------------
+    else:
+      # vivAttention----------------------------------------------------
+      attention = [word in content_lower for word in vivAttention]
+      if any(attention):
+        log_automated_response(attention)
+        response = random.choice(vivBirdNoises)
+        await message.channel.send(response)
+      # ----------------------------------------------------
+    # ----------------------------------------------------
 
     
 
-#reaction add event
+# reaction add event
 @client.event
 async def on_raw_reaction_add(payload):
   msg_id = payload.message_id
 
-  #Pronoun Roles
+  # Pronoun Roles
   if msg_id == 802997626995343370:
     guild_id = payload.guild_id
     guild = discord.utils.find(lambda g : g.id == guild_id, client.guilds)
 
     if payload.emoji.id == 802976289379713025:
-      #He/Him
+      # He/Him
       role = discord.utils.get(guild.roles, id=802943259596685332)
     elif payload.emoji.id == 802976289597947914:
-      #She/Her
+      # She/Her
       role = discord.utils.get(guild.roles, id=802943355960164372)
     elif payload.emoji.id == 802976289681834014:
-      #They/Them
+      # They/Them
       role = discord.utils.get(guild.roles, id=802943394409480202)
     
     if role is not None:
@@ -131,19 +182,19 @@ async def on_raw_reaction_add(payload):
       if member is not None:
         await member.add_roles(role)
 
-  #Game Roles
+  # Game Roles
   if msg_id == 802997668304650280:
     guild_id = payload.guild_id
     guild = discord.utils.find(lambda g : g.id == guild_id, client.guilds)
 
     if payload.emoji.id == 803000326184894496:
-      #Art Games
+      # Art Games
       role = discord.utils.get(guild.roles, id=802943449404801054)
     elif payload.emoji.id == 803000326218317844:
-      #OC Questions
+      # OC Questions
       role = discord.utils.get(guild.roles, id=802943523979526174)
     elif payload.emoji.id == 978373881268146256:
-      #Gamerz
+      # Gamerz
       role = discord.utils.get(guild.roles, id=978375025461719070)
     
     if role is not None:
@@ -153,16 +204,16 @@ async def on_raw_reaction_add(payload):
         await member.add_roles(role)
         print(member.name + '2')
 
-  #Stream Roles
+  # Stream Roles
   if msg_id == 931991719136878602:
     guild_id = payload.guild_id
     guild = discord.utils.find(lambda g : g.id == guild_id, client.guilds)
 
     if payload.emoji.id == 845447895758274631:
-      #Isabelle Stream notification
+      # Isabelle Stream notification
       role = discord.utils.get(guild.roles, id=932759248755126303)
     elif payload.emoji.id == 794017620965720094:
-      #Mark Stream notification
+      # Mark Stream notification
       role = discord.utils.get(guild.roles, id=1024670256381304842)
     
     if role is not None:
@@ -172,7 +223,7 @@ async def on_raw_reaction_add(payload):
         await member.add_roles(role)
         print(member.name + '2')
 
-#reaction remove event
+# reaction remove event
 @client.event
 async def on_raw_reaction_remove(payload):
   msg_id = payload.message_id
@@ -239,4 +290,4 @@ async def on_raw_reaction_remove(payload):
       if member is not None:
         await member.remove_roles(role)
 
-client.run(os.getenv('TOKEN'))
+client.run(client_token)
