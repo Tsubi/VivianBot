@@ -2,49 +2,109 @@ import discord
 import os
 import random
 import logging
+import glob
+from logging import StreamHandler
+from logging.handlers import TimedRotatingFileHandler
 from dotenv import load_dotenv
 
-log = logging.getLogger("VivianBot")
-log.setLevel(logging.DEBUG)
+log = logging.getLogger('VivianBot')
 
+console_handler = StreamHandler()
+console_handler.setLevel(logging.WARNING)
 
+file_handler = TimedRotatingFileHandler('vivian.log', when='D', interval=1, backupCount=7)
+file_handler.setLevel(logging.INFO)
+
+log.addHandler(console_handler)
+log.addHandler(file_handler)
+
+#Loading .env file, contains sensitive client information
 load_dotenv()
 
 client = discord.Client(intents=discord.Intents.all())
+guild_id = 580495406534885385 # Vivian's Birdhouse
+guild = None # not populated until bot is started
 
 #Vivian Simple Information----------------------------------------------------
 #Listen words
-vivAttention = ["Vivian", "vivian", "virb", "birb", "Virb"]
-vivCommands = ["!pet"]
-#Responses
+vivAttention = ["vivian", "virb", "birb"]
+
+vivGlobalCommands = ["!pet"]
+
+mod_id = 580496944686694407
+mod_role = None # not populated until bot is started
+vivModCommands = ["!raffle", "!endraffle"]
+
+
+# Pet Responses
 vivBirdNoises = ["Chirp!", "Cheep!", "Peep peep!", "Chirp chirp!", "Tweet tweet!"]
+# Active raffles. Stored as a list of user ids.
+raffles = {}
+for file in glob.glob("*.raffle"):
+  raffle_name = os.path.splitext(file)[0]
+  raffle_entrants = []
+  with open(file) as f:
+    raffle_entrants = f.read().split()
+  raffles[raffle_name] = raffle_entrants
+
+    
 
 #start
 @client.event
 async def on_ready():
+    global guild, mod_role
     log.info(f'Bot logged in as: {client.user}')
+    guild = client.get_guild(guild_id)
+    mod_role = guild.get_role(mod_id) 
 
 #listens for a message
 @client.event
 async def on_message(message):
-    
-    #makes sure that Vivian doesn't responde to her own messages
     if message.author == client.user:
         return
 
-    log.debug(f"Recieved a message from {message.author}")
+    
+    # get information about who sent the message
+    author = message.author
 
-    #the message content variable
-    msg = message.content
+    # where the message was sent
+    channel = message.channel
 
-    #respond with a random string from the array
-    if any(word in msg for word in vivAttention):
-        await message.channel.send(random.choice(vivBirdNoises))
+    #the message content variable, string representation
+    content = message.content
+    # for easy use in string matching
+    content_lower = content_lower.lower()
+    # for easy use checking against commands
+    command = content_lower.split()[0]
 
-    #Commands---------------------------------------------------------------------
-    #!pet
-    if msg.startswith(vivCommands[0]):
-        await message.channel.send(f"{random.choice(vivBirdNoises)} <:VivianPet:790248658054283274>")
+    log.debug(
+      f"""Parsing a message: 
+        Author: {author.name}
+        Channel: {channel.name}
+        Content: {content}"""
+    )
+
+    # Global User Commands---------------------------------------------------------------------
+    if command in vivGlobalCommands:
+      #!pet
+      if content_lower.startswith(vivGlobalCommands[0]):
+          await message.channel.send(f"{random.choice(vivBirdNoises)} <:VivianPet:790248658054283274>")
+
+    # Mod Commands---------------------------------------------------------------------
+    elif command in vivModCommands and author.top_role > mod_role:
+      #!raffle <title> <emote>
+      if content_lower.startswith(vivModCommands[0]):
+        pass
+      #!endraffle <title>
+      if content_lower.startswith(vivModCommands[0]):
+        pass
+
+    #User mentions bot by name
+    elif any(word in content_lower for word in vivAttention):
+      log.info(f"{author.name} mentioned bot, responding")
+      await message.channel.send(random.choice(vivBirdNoises))
+
+    
 
 #reaction add event
 @client.event
