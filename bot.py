@@ -28,6 +28,8 @@ vivAttention = ["vivian", "virb", "birb"]
 vivGlobalCommands = ["!pet"]
 # Mod commands - need minimum mod permissions to use
 vivModCommands = ["!raffle", "!endraffle"]
+# Testing commands - used to note commands that may only be used in bot channel for test purposes
+vivTestingCommands = ["!raffle", "!endraffle"]
 
 # Full list of commands, for control flow
 vivAllCommands = vivGlobalCommands + vivModCommands
@@ -51,7 +53,8 @@ for file in glob.glob("*.raffle"):
 load_dotenv()
 client_token = os.getenv('TOKEN')
 guild_id = os.getenv('GUILD_ID')
-mod_id = os.getenv('MOD_ID')
+mod_role_id = os.getenv('MOD_ROLE_ID')
+testing_channel_id = os.getenv('TESTING_CHANNEL_ID')
 
 # Global variables to hold objects relating to configuration
 # Not populated until bot has had a change to run 
@@ -67,16 +70,17 @@ client = discord.Client(intents=discord.Intents.all())
 # Post-login startup sequence
 @client.event
 async def on_ready():
-    log.info(f'Bot logged in as: {client.user}')
+  log.info(f'Bot logged in as: {client.user}')
 
-    # Setup global variables now that we are logged in
-    global guild, mod_role
-    guild = client.get_guild(guild_id)
-    mod_role = guild.get_role(mod_id) 
+  # Setup global variables now that we are logged in
+  global guild, mod_role
+  guild = client.get_guild(guild_id)
+  mod_role = guild.get_role(mod_role_id) 
 
 # message sent event
 @client.event
 async def on_message(message):
+  try:
     if message.author == client.user:
         return
 
@@ -127,7 +131,6 @@ async def on_message(message):
         #!pet
         if content_lower.startswith(vivGlobalCommands[0]):
           response = f"{random.choice(vivBirdNoises)} <:VivianPet:790248658054283274>"
-          await message.channel.send(response)
       # ----------------------------------------------------
 
       # Mod Commands----------------------------------------------------
@@ -138,7 +141,7 @@ async def on_message(message):
           log.info("<params>")
 
         #!endraffle <title>
-        if content_lower.startswith(vivModCommands[0]):
+        elif content_lower.startswith(vivModCommands[0]):
           log.info("<params>")
       # ----------------------------------------------------
 
@@ -151,143 +154,139 @@ async def on_message(message):
       if any(attention):
         log_automated_response(attention)
         response = random.choice(vivBirdNoises)
-        await message.channel.send(response)
+        
       # ----------------------------------------------------
     # ----------------------------------------------------
 
-    
+    if command in vivTestingCommands:
+      pass # TODO: check if in the right channel, generate some logs
+    else:
+      await message.channel.send(response)
+  except Exception as e:
+    log.error(f"Encountered error {e} while processing a message.")
+    log.error(f"Message: {message.content} \n Author {message.author.name}")
 
 # reaction add event
 @client.event
 async def on_raw_reaction_add(payload):
-  msg_id = payload.message_id
+  try:
+    msg_id = payload.message_id
 
-  # Pronoun Roles
-  if msg_id == 802997626995343370:
-    guild_id = payload.guild_id
-    guild = discord.utils.find(lambda g : g.id == guild_id, client.guilds)
+    # Pronoun Roles----------------------------------------------------
+    if msg_id == 802997626995343370:
+      if payload.emoji.id == 802976289379713025:
+        # He/Him
+        role = discord.utils.get(guild.roles, id=802943259596685332)
+      elif payload.emoji.id == 802976289597947914:
+        # She/Her
+        role = discord.utils.get(guild.roles, id=802943355960164372)
+      elif payload.emoji.id == 802976289681834014:
+        # They/Them
+        role = discord.utils.get(guild.roles, id=802943394409480202)
+      else:
+        log.warn(f"Server member {member.name} reacted to pronoun roles message with invalid emote")
+    # ----------------------------------------------------
 
-    if payload.emoji.id == 802976289379713025:
-      # He/Him
-      role = discord.utils.get(guild.roles, id=802943259596685332)
-    elif payload.emoji.id == 802976289597947914:
-      # She/Her
-      role = discord.utils.get(guild.roles, id=802943355960164372)
-    elif payload.emoji.id == 802976289681834014:
-      # They/Them
-      role = discord.utils.get(guild.roles, id=802943394409480202)
-    
+    # Game Roles----------------------------------------------------
+    elif msg_id == 802997668304650280:
+      if payload.emoji.id == 803000326184894496:
+        # Art Games
+        role = discord.utils.get(guild.roles, id=802943449404801054)
+      elif payload.emoji.id == 803000326218317844:
+        # OC Questions
+        role = discord.utils.get(guild.roles, id=802943523979526174)
+      elif payload.emoji.id == 978373881268146256:
+        # Gamerz
+        role = discord.utils.get(guild.roles, id=978375025461719070)
+      else:
+        log.warn(f"Server member {member.name} reacted to game roles message with invalid emote")
+    # ----------------------------------------------------
+      
+
+    # Stream Roles----------------------------------------------------
+    elif msg_id == 931991719136878602:
+      if payload.emoji.id == 845447895758274631:
+        # Isabelle Stream notification
+        role = discord.utils.get(guild.roles, id=932759248755126303)
+      elif payload.emoji.id == 794017620965720094:
+        # Mark Stream notification
+        role = discord.utils.get(guild.roles, id=1024670256381304842)
+      else:
+        log.warn(f"Server member {member.name} reacted to stream roles message with invalid emote")
+    # ----------------------------------------------------
+      
     if role is not None:
       member = payload.member
       if member is not None:
         await member.add_roles(role)
-
-  # Game Roles
-  if msg_id == 802997668304650280:
-    guild_id = payload.guild_id
-    guild = discord.utils.find(lambda g : g.id == guild_id, client.guilds)
-
-    if payload.emoji.id == 803000326184894496:
-      # Art Games
-      role = discord.utils.get(guild.roles, id=802943449404801054)
-    elif payload.emoji.id == 803000326218317844:
-      # OC Questions
-      role = discord.utils.get(guild.roles, id=802943523979526174)
-    elif payload.emoji.id == 978373881268146256:
-      # Gamerz
-      role = discord.utils.get(guild.roles, id=978375025461719070)
-    
-    if role is not None:
-      member = payload.member
-      print(member.name + '1')
-      if member is not None:
-        await member.add_roles(role)
-        print(member.name + '2')
-
-  # Stream Roles
-  if msg_id == 931991719136878602:
-    guild_id = payload.guild_id
-    guild = discord.utils.find(lambda g : g.id == guild_id, client.guilds)
-
-    if payload.emoji.id == 845447895758274631:
-      # Isabelle Stream notification
-      role = discord.utils.get(guild.roles, id=932759248755126303)
-    elif payload.emoji.id == 794017620965720094:
-      # Mark Stream notification
-      role = discord.utils.get(guild.roles, id=1024670256381304842)
-    
-    if role is not None:
-      member = payload.member
-      print(member.name + '1')
-      if member is not None:
-        await member.add_roles(role)
-        print(member.name + '2')
+        log.info(f"Added role {role.name} to server member {member.name}")
+      else:
+        log.info(f"Attempted to add role {role.name}, but couldn't find original user which requested the addition.")
+  except Exception as e:
+    log.error(f"Encountered error {e} while processing a raw_reaction_add.")
+    log.error(f"Emoji: {payload.emoji.id}\n Member: {payload.member.name}")
 
 # reaction remove event
 @client.event
 async def on_raw_reaction_remove(payload):
-  msg_id = payload.message_id
+  try:
+    msg_id = payload.message_id
 
-  #Pronoun Roles
-  if msg_id == 802997626995343370:
-    guild_id = payload.guild_id
-    guild = discord.utils.find(lambda g : g.id == guild_id, client.guilds)
+    # Pronoun Roles----------------------------------------------------
+    if msg_id == 802997626995343370:
+      if payload.emoji.id == 802976289379713025:
+        #He/Him
+        role = discord.utils.get(guild.roles, id=802943259596685332)
+        print(role.name)
+      elif payload.emoji.id == 802976289597947914:
+        #She/Her
+        role = discord.utils.get(guild.roles, id=802943355960164372)
+        print(role.name)
+      elif payload.emoji.id == 802976289681834014:
+        #They/Them
+        role = discord.utils.get(guild.roles, id=802943394409480202)
+        print(role.name)
+      else:
+        log.warn(f"Server member {member.name} reacted to pronoun roles message with invalid emote")
+    # ----------------------------------------------------
 
-    if payload.emoji.id == 802976289379713025:
-      #He/Him
-      role = discord.utils.get(guild.roles, id=802943259596685332)
-      print(role.name)
-    elif payload.emoji.id == 802976289597947914:
-      #She/Her
-      role = discord.utils.get(guild.roles, id=802943355960164372)
-      print(role.name)
-    elif payload.emoji.id == 802976289681834014:
-      #They/Them
-      role = discord.utils.get(guild.roles, id=802943394409480202)
-      print(role.name)
-    
+
+    # Game Roles----------------------------------------------------
+    elif msg_id == 802997668304650280:
+      if payload.emoji.id == 803000326184894496:
+        #Art Games
+        role = discord.utils.get(guild.roles, id=802943449404801054)
+      elif payload.emoji.id == 803000326218317844:
+        #OC Questions
+        role = discord.utils.get(guild.roles, id=802943523979526174)
+      elif payload.emoji.id == 978373881268146256:
+        #Gamerz
+        role = discord.utils.get(guild.roles, id=978375025461719070)
+      else:
+        log.warn(f"Server member {member.name} reacted to game roles message with invalid emote")
+    # ----------------------------------------------------
+
+    # Stream Roles----------------------------------------------------
+    elif msg_id == 931991719136878602:
+      if payload.emoji.id == 845447895758274631:
+        #Isabelle Stream notification
+        role = discord.utils.get(guild.roles, id=932759248755126303)
+      elif payload.emoji.id == 794017620965720094:
+        #Mark Stream notification
+        role = discord.utils.get(guild.roles, id=1024670256381304842)
+      else:
+        log.warn(f"Server member {member.name} reacted to stream roles message with invalid emote")
+    #----------------------------------------------------
+      
     if role is not None:
-      member = await guild.fetch_member(payload.user_id)
-      print(member.name + '1')
+      member = payload.member
       if member is not None:
         await member.remove_roles(role)
-        print(member.name + '2')
-
-  #Game Roles
-  if msg_id == 802997668304650280:
-    guild_id = payload.guild_id
-    guild = discord.utils.find(lambda g : g.id == guild_id, client.guilds)
-
-    if payload.emoji.id == 803000326184894496:
-      #Art Games
-      role = discord.utils.get(guild.roles, id=802943449404801054)
-    elif payload.emoji.id == 803000326218317844:
-      #OC Questions
-      role = discord.utils.get(guild.roles, id=802943523979526174)
-    elif payload.emoji.id == 978373881268146256:
-      #Gamerz
-      role = discord.utils.get(guild.roles, id=978375025461719070)
-    
-    if role is not None:
-      member = await guild.fetch_member(payload.user_id)
-      if member is not None:
-        await member.remove_roles(role)
-
-  #Stream Roles
-  if msg_id == 931991719136878602:
-    guild_id = payload.guild_id
-    guild = discord.utils.find(lambda g : g.id == guild_id, client.guilds)
-
-    if payload.emoji.id == 845447895758274631:
-      #Isabelle Stream notification
-      role = discord.utils.get(guild.roles, id=932759248755126303)
-    elif payload.emoji.id == 794017620965720094:
-      #Mark Stream notification
-      role = discord.utils.get(guild.roles, id=1024670256381304842)
-    
-    if role is not None:
-      member = await guild.fetch_member(payload.user_id)
-      if member is not None:
-        await member.remove_roles(role)
+        log.info(f"Removed role {role.name} from server member {member.name}")
+      else:
+        log.info(f"Attempted to remove role {role.name}, but couldn't find original user which requested the addition.")
+  except Exception as e:
+    log.error(f"Encountered error {e} while processing a raw_reaction_remove.")
+    log.error(f"Emoji: {payload.emoji.id}\n Member: {payload.member.name}")
 
 client.run(client_token)
