@@ -134,15 +134,17 @@ async def on_message(message):
       # ----------------------------------------------------
 
       # Mod Commands----------------------------------------------------
-      elif command in vivModCommands and author.top_role > mod_role:
+      elif command in vivModCommands and ( author.top_role > mod_role or 
+        ( command in vivTestingCommands and channel.id==testing_channel_id ) ):
+
 
         #!raffle <title> <emote>
         if content_lower.startswith(vivModCommands[0]):
-          log.info("NOT IMPLEMENTED")
+          log.error("NOT IMPLEMENTED")
 
         #!endraffle <title>
         elif content_lower.startswith(vivModCommands[0]):
-          log.info("NOT IMPLEMENTED")
+          log.error("NOT IMPLEMENTED")
       # ----------------------------------------------------
 
     # ----------------------------------------------------
@@ -160,6 +162,8 @@ async def on_message(message):
 
     if command in vivTestingCommands:
       pass # TODO: check if in the right channel, generate some logs. Retu
+
+
     # Only send a response if we have one to send.
     # Some commands may need to do logic with the message they send (such as get the ID)
     if response != None:
