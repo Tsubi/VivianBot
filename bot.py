@@ -9,15 +9,19 @@ from dotenv import load_dotenv
 
 # Logging Configuration----------------------------------------------------
 log = logging.getLogger('VivianBot')
+formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 
 console_handler = StreamHandler()
 console_handler.setLevel(logging.WARNING)
+console_handler.setFormatter(formatter)
 
 file_handler = TimedRotatingFileHandler('vivian.log', when='D', interval=1, backupCount=7)
-file_handler.setLevel(logging.INFO)
+file_handler.setLevel(logging.DEBUG)
+file_handler.setFormatter(formatter)
 
 log.addHandler(console_handler)
 log.addHandler(file_handler)
+log.setLevel(logging.INFO)
 # ----------------------------------------------------
 
 
@@ -52,9 +56,9 @@ for file in glob.glob("*.raffle"):
 #Loading .env file, contains sensitive client information, and other server-configuration
 load_dotenv()
 client_token = os.getenv('TOKEN')
-guild_id = os.getenv('GUILD_ID')
-mod_role_id = os.getenv('MOD_ROLE_ID')
-testing_channel_id = os.getenv('TESTING_CHANNEL_ID')
+guild_id = int(os.getenv('GUILD_ID'))
+mod_role_id = int(os.getenv('MOD_ROLE_ID'))
+testing_channel_id = int(os.getenv('TESTING_CHANNEL_ID'))
 
 # Global variables to hold objects relating to configuration
 # Not populated until bot has had a change to run 
@@ -93,9 +97,12 @@ async def on_message(message):
     #the message content variable, string representation
     content = message.content
     # for easy use in string matching
-    content_lower = content_lower.lower()
+    content_lower = content.lower()
     # for easy use checking against commands
     command = content_lower.split()[0]
+
+    # Guaruntee the response is defined, even if it is None
+    response = None
 
     # Enable for very verbose logging
     # log.debug(
@@ -152,7 +159,7 @@ async def on_message(message):
     # Non-Command Automated Responses----------------------------------------------------
     else:
       # vivAttention----------------------------------------------------
-      attention = [word in content_lower for word in vivAttention]
+      attention = [word for word in vivAttention if word in content_lower]
       if any(attention):
         log_automated_response(attention)
         response = random.choice(vivBirdNoises)
