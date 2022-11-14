@@ -105,7 +105,7 @@ async def on_message(message):
     #     Content: {content}"""
     # )
 
-    # Format string used to log commands
+    # Log generated when a command is detected
     log_command = lambda command: log.info(
       f"""Command Recieved: 
         Author: {author.name}
@@ -113,7 +113,7 @@ async def on_message(message):
         Command: "{command}" """
     )
 
-    # Format string used to log commands
+    # Log generated when a 'keyword' is detected
     log_automated_response = lambda keyword: log.info(
       f"""Keyword Recieved: 
         Author: {author.name}
@@ -138,11 +138,11 @@ async def on_message(message):
 
         #!raffle <title> <emote>
         if content_lower.startswith(vivModCommands[0]):
-          log.info("<params>")
+          log.info("NOT IMPLEMENTED")
 
         #!endraffle <title>
         elif content_lower.startswith(vivModCommands[0]):
-          log.info("<params>")
+          log.info("NOT IMPLEMENTED")
       # ----------------------------------------------------
 
     # ----------------------------------------------------
@@ -159,8 +159,10 @@ async def on_message(message):
     # ----------------------------------------------------
 
     if command in vivTestingCommands:
-      pass # TODO: check if in the right channel, generate some logs
-    else:
+      pass # TODO: check if in the right channel, generate some logs. Retu
+    # Only send a response if we have one to send.
+    # Some commands may need to do logic with the message they send (such as get the ID)
+    if response != None:
       await message.channel.send(response)
   except Exception as e:
     log.error(f"Encountered error {e} while processing a message.")
@@ -231,21 +233,19 @@ async def on_raw_reaction_add(payload):
 async def on_raw_reaction_remove(payload):
   try:
     msg_id = payload.message_id
+    role = None
 
     # Pronoun Roles----------------------------------------------------
     if msg_id == 802997626995343370:
       if payload.emoji.id == 802976289379713025:
         #He/Him
         role = discord.utils.get(guild.roles, id=802943259596685332)
-        print(role.name)
       elif payload.emoji.id == 802976289597947914:
         #She/Her
         role = discord.utils.get(guild.roles, id=802943355960164372)
-        print(role.name)
       elif payload.emoji.id == 802976289681834014:
         #They/Them
         role = discord.utils.get(guild.roles, id=802943394409480202)
-        print(role.name)
       else:
         log.warn(f"Server member {member.name} reacted to pronoun roles message with invalid emote")
     # ----------------------------------------------------
