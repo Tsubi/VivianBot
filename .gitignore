@@ -1,3 +1,4 @@
 .vscode
 vivian.log
 vivian.log.*
+__pycache__
