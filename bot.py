@@ -95,7 +95,6 @@ async def on_message(message):
   try:
     if message.author == client.user:
         return
-
     # get information about who sent the message
     author = message.author
 
@@ -169,8 +168,6 @@ async def on_message(message):
       await message.channel.send(response)
   except Exception as e:
     log_message_error(message, e)
-    log.error(f"Encountered error {e} while processing a message.")
-    log.error(f"Message: {message.content} \n Author {message.author.name}")
 
 # reaction add event
 @client.event

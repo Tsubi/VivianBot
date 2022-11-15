@@ -7,7 +7,7 @@ log_message_error = lambda message, error: log.error(
 f"""Message Parsing Failed!:
     Author: {message.author.name} ({message.author.id})
     Channel: {message.channel.name}
-    Error: {error}
+    Error: {repr(error)}
     Message: "{message.content}" ({message.id}) """
 )
 
@@ -31,7 +31,8 @@ log_reaction_error = lambda payload, error: log.error(
 f"""Reaction Parsing Failed!:
     Author: {payload.member.name} ({payload.member.id})
     Message: {payload.message_id}
-    Emote: {payload.emoji.id} """
+    Emote: {payload.emoji.id} 
+    Error: {repr(error)}"""
 )
 
 # Invalid Emoji was used on a Role-Add message
