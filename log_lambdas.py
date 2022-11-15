@@ -5,7 +5,7 @@ log = logging.getLogger('VivianBot')
 # Log generated for a failure during message parsing
 log_message_error = lambda message, error: log.error(
 f"""Message Parsing Failed!:
-    Author: {message.content.author.name} ({message.content.author.id})
+    Author: {message.author.name} ({message.author.id})
     Channel: {message.channel.name}
     Error: {error}
     Message: "{message.content}" ({message.id}) """
