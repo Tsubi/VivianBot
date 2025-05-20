@@ -291,7 +291,7 @@ async def on_raw_reaction_remove(payload):
         log_invalid_emoji(payload, "Game")
     # ----------------------------------------------------
 
-    # Stream Roles----------------------------------------------------
+    # Announcment Roles----------------------------------------------------
     elif msg_id == 931991719136878602:
       if emoji_id == 845447895758274631:
         #Isabelle Stream notification
@@ -299,8 +299,23 @@ async def on_raw_reaction_remove(payload):
       elif emoji_id == 794017620965720094:
         #Mark Stream notification
         role = discord.utils.get(guild.roles, id=1024670256381304842)
+      elif emoji_id == 841812109934198824 :
+        # Random update notification
+        role = discord.utils.get(guild.roles, id=1374429720317264023)
       else:
         log_invalid_emoji(payload, "Stream")
+
+    # Commission Roles----------------------------------------------------
+    elif msg_id == 1374428539478085722:
+      if emoji_id == 746466967183032426:
+        # Isabelle commission notification
+        role = discord.utils.get(guild.roles, id=1374428971671883966)
+      elif emoji_id == 1374428884266913956:
+        # General commission notification
+        role = discord.utils.get(guild.roles, id=746466949239930910)
+      else:
+        log_invalid_emoji(payload, "Stream")
+
     #----------------------------------------------------
       
     if role is not None:
