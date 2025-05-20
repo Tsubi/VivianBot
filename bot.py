@@ -229,9 +229,9 @@ async def on_raw_reaction_add(payload):
       if emoji_id == 746466967183032426:
         # Isabelle commission notification
         role = discord.utils.get(guild.roles, id=1374428971671883966)
-      elif emoji_id == 1374428884266913956:
+      elif emoji_id == 746466949239930910:
         # General commission notification
-        role = discord.utils.get(guild.roles, id=746466949239930910)
+        role = discord.utils.get(guild.roles, id=1374428884266913956)
       else:
         log_invalid_emoji(payload, "Comms")
 
@@ -310,9 +310,9 @@ async def on_raw_reaction_remove(payload):
       if emoji_id == 746466967183032426:
         # Isabelle commission notification
         role = discord.utils.get(guild.roles, id=1374428971671883966)
-      elif emoji_id == 1374428884266913956:
+      elif emoji_id == 746466949239930910:
         # General commission notification
-        role = discord.utils.get(guild.roles, id=746466949239930910)
+        role = discord.utils.get(guild.roles, id=1374428884266913956)
       else:
         log_invalid_emoji(payload, "Comms")
 
