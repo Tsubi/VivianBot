@@ -233,7 +233,7 @@ async def on_raw_reaction_add(payload):
         # General commission notification
         role = discord.utils.get(guild.roles, id=746466949239930910)
       else:
-        log_invalid_emoji(payload, "Stream")
+        log_invalid_emoji(payload, "Comms")
 
     # ----------------------------------------------------
       
@@ -314,7 +314,7 @@ async def on_raw_reaction_remove(payload):
         # General commission notification
         role = discord.utils.get(guild.roles, id=746466949239930910)
       else:
-        log_invalid_emoji(payload, "Stream")
+        log_invalid_emoji(payload, "Comms")
 
     #----------------------------------------------------
       
